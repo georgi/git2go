@@ -285,23 +285,29 @@ func (repo *Repository) SetWorkdir(workdir string, updateGitlink bool) error {
 	return nil
 }
 
-func (v *Repository) TreeBuilder() (*TreeBuilder, error) {
-	return TreeBuilderWith(nil)
-}
-
 func (v *Repository) TreeBuilderWith(tree *Tree) (*TreeBuilder, error) {
+	var tree_ptr *[0]byte = nil
+
 	bld := new(TreeBuilder)
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if ret := C.git_treebuilder_create(&bld.ptr, &tree.ptr); ret < 0 {
+	if tree != nil {
+		tree_ptr = tree.ptr
+	}
+
+	if ret := C.git_treebuilder_create(&bld.ptr, tree_ptr); ret < 0 {
 		return nil, LastError()
 	}
 	runtime.SetFinalizer(bld, (*TreeBuilder).Free)
 
 	bld.repo = v
 	return bld, nil
+}
+
+func (v *Repository) TreeBuilder() (*TreeBuilder, error) {
+	return v.TreeBuilderWith(nil)
 }
 
 func (v *Repository) RevparseSingle(spec string) (Object, error) {
