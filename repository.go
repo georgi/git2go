@@ -286,12 +286,16 @@ func (repo *Repository) SetWorkdir(workdir string, updateGitlink bool) error {
 }
 
 func (v *Repository) TreeBuilder() (*TreeBuilder, error) {
+	return TreeBuilderWith(nil)
+}
+
+func (v *Repository) TreeBuilderWith(tree *Tree) (*TreeBuilder, error) {
 	bld := new(TreeBuilder)
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if ret := C.git_treebuilder_create(&bld.ptr, nil); ret < 0 {
+	if ret := C.git_treebuilder_create(&bld.ptr, &tree.ptr); ret < 0 {
 		return nil, LastError()
 	}
 	runtime.SetFinalizer(bld, (*TreeBuilder).Free)
